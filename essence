@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tableau de bord industriel - Bio-Generateurs</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700;800&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-1: #f4f9f8;
+            --bg-2: #e8f0ff;
+            --bg-3: #f7efe6;
+            --ink: #0f172a;
+        }
+        body {
+            font-family: 'Manrope', sans-serif;
+            color: var(--ink);
+            background:
+                radial-gradient(900px 500px at -5% -5%, #d8f3ea 0%, transparent 60%),
+                radial-gradient(850px 450px at 110% -10%, #d9e7ff 0%, transparent 55%),
+                linear-gradient(160deg, var(--bg-1) 0%, var(--bg-2) 45%, var(--bg-3) 100%);
+        }
+        h1, h2, h3 { font-family: 'Space Grotesk', sans-serif; }
+        input[type="number"]::-webkit-inner-spin-button,
+        input[type="number"]::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        input[type="number"] {
+            -moz-appearance: textfield;
+            appearance: textfield;
+        }
+        .panel {
+            background: rgba(255, 255, 255, 0.86);
+            -webkit-backdrop-filter: blur(7px);
+            backdrop-filter: blur(7px);
+            border: 1px solid rgba(148, 163, 184, 0.22);
+            box-shadow: 0 14px 32px rgba(15, 23, 42, 0.08);
+        }
+        .fade-up {
+            animation: fadeUp 450ms ease-out;
+        }
+        .select-native {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border: 0;
+        }
+        .select-dropdown {
+            position: relative;
+            margin-top: 0.35rem;
+            z-index: 120;
+        }
+        .select-trigger {
+            width: 100%;
+            border: 1px solid #d1d5db;
+            border-radius: 0.75rem;
+            background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+            padding: 0.56rem 0.75rem;
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: #0f172a;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.6rem;
+            transition: border-color 0.18s ease, box-shadow 0.18s ease;
+        }
+        .select-trigger:hover {
+            border-color: #94a3b8;
+        }
+        .select-trigger:focus-visible {
+            outline: none;
+            border-color: #0f766e;
+            box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.18);
+        }
+        .select-trigger svg {
+            width: 16px;
+            height: 16px;
+            color: #475569;
+            flex-shrink: 0;
+            transition: transform 0.18s ease;
+        }
+        .select-trigger[aria-expanded="true"] svg {
+            transform: rotate(180deg);
+        }
+        .select-menu {
+            position: absolute;
+            top: calc(100% + 0.35rem);
+            left: 0;
+            right: 0;
+            z-index: 999;
+            border: 1px solid #d1d5db;
+            border-radius: 0.85rem;
+            background: #ffffff;
+            box-shadow: 0 18px 38px rgba(15, 23, 42, 0.16);
+            max-height: 280px;
+            overflow-y: auto;
+            padding: 0.35rem;
+            animation: dropdownIn 160ms ease-out;
+        }
+        .select-item {
+            width: 100%;
+            text-align: left;
+            border: 0;
+            background: transparent;
+            color: #0f172a;
+            font-size: 0.92rem;
+            font-weight: 600;
+            border-radius: 0.65rem;
+            padding: 0.5rem 0.65rem;
+            transition: background-color 0.12s ease;
+        }
+        .select-item:hover {
+            background: #f1f5f9;
+        }
+        .select-item-active {
+            background: #0f766e;
+            color: #ffffff;
+        }
+        @keyframes dropdownIn {
+            from { opacity: 0; transform: translateY(-4px) scale(0.99); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body class="text-slate-800 antialiased min-h-screen pb-12">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <header class="panel relative z-40 rounded-3xl p-6 md:p-8 mb-8 fade-up">
+            <div class="flex flex-col xl:flex-row justify-between gap-6 xl:items-center">
+                <div>
+                    <h1 class="text-3xl md:text-4xl font-bold tracking-tight mt-3 text-slate-900">Bio-Generateurs Pro</h1>
+                    <p class="text-slate-600 mt-2 max-w-xl">Pilotage de production, marge en temps reel et analyse tactique des rendements.</p>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3 w-full xl:w-auto">
+                    <label class="bg-white border border-slate-200 rounded-xl px-3 py-2">
+                        <span class="text-[11px] font-bold uppercase tracking-wide text-slate-500">Cereale</span>
+                        <select id="cerealSelect" class="select-native" aria-hidden="true" tabindex="-1">
+                            <option value="soja">Soja (1:0.25)</option>
+                            <option value="orge">Orge (1:0.25)</option>
+                            <option value="ble_arctic">Ble arctique (1:0.25)</option>
+                            <option value="avoine_arctic">Avoine arctique (1:0.25)</option>
+                            <option value="sorgho">Sorgho (1:2.5)</option>
+                            <option value="mais">Mais (1:0.25)</option>
+                            <option value="kamut">Kamut (1:2.5)</option>
+                            <option value="ble">Ble (5:0.25)</option>
+                            <option value="barley">Orge perlee (1:0.25)</option>
+                            <option value="fonio">Fonio (1:2.5)</option>
+                            <option value="sunflower">Tournesol (1:0.25)</option>
+                            <option value="rye">Seigle (1:0.25)</option>
+                        </select>
+                        <div class="select-dropdown">
+                            <button type="button" id="cerealTrigger" class="select-trigger" aria-haspopup="listbox" aria-expanded="false">
+                                <span id="cerealLabel">Soja (1:0.25)</span>
+                                <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                    <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.165l3.71-3.934a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd"></path>
+                                </svg>
+                            </button>
+                            <div id="cerealMenu" class="select-menu" role="listbox" hidden></div>
+                        </div>
+                    </label>
+                    <label class="bg-white border border-slate-200 rounded-xl px-3 py-2">
+                        <span class="text-[11px] font-bold uppercase tracking-wide text-slate-500">Machines</span>
+                        <input type="number" id="nbMachinesInput" value="4" min="1" step="1" class="mt-1 w-full text-sm font-semibold bg-transparent outline-none">
+                    </label>
+                    <label class="bg-white border border-slate-200 rounded-xl px-3 py-2">
+                        <span class="text-[11px] font-bold uppercase tracking-wide text-slate-500">Tonne ($)</span>
+                        <input type="number" id="prixTonneInput" value="1780" min="0" step="10" class="mt-1 w-full text-sm font-semibold bg-transparent outline-none">
+                    </label>
+                    <label class="bg-white border border-slate-200 rounded-xl px-3 py-2">
+                        <span class="text-[11px] font-bold uppercase tracking-wide text-slate-500">Vente / 100L ($)</span>
+                        <input type="number" id="prixVenteInput" value="750" min="0" step="10" class="mt-1 w-full text-sm font-semibold bg-transparent outline-none">
+                    </label>
+                </div>
+            </div>
+        </header>
+
+        <main class="relative z-10 grid grid-cols-1 xl:grid-cols-3 gap-8">
+            <section class="xl:col-span-2 space-y-6 fade-up">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <article class="panel rounded-2xl p-5">
+                        <p class="text-[11px] uppercase font-bold tracking-wide text-slate-500">Cout / litre</p>
+                        <h3 class="text-3xl font-bold mt-2" id="valCoutLitre">0,00 $</h3>
+                    </article>
+                    <article id="beneficeCard" class="rounded-2xl p-5 border shadow-lg bg-gradient-to-br from-emerald-600 to-emerald-700 border-emerald-800 text-white transition-colors">
+                        <p class="text-[11px] uppercase font-bold tracking-wide text-emerald-100">Benefice / minute</p>
+                        <h3 class="text-3xl font-bold mt-2" id="varBeneficeMinute">0,00 $</h3>
+                    </article>
+                    <article class="panel rounded-2xl p-5">
+                        <p class="text-[11px] uppercase font-bold tracking-wide text-slate-500">Marge / litre</p>
+                        <h3 class="text-3xl font-bold mt-2" id="valMargeLitre">0,00 $</h3>
+                    </article>
+                </div>
+
+                <section class="panel rounded-2xl overflow-hidden">
+                    <div class="flex items-center justify-between px-5 py-4 border-b border-slate-200 bg-white/80">
+                        <h2 class="text-lg font-bold">Projection de rentabilite</h2>
+                        <span id="rentabiliteBadge" class="text-xs font-bold px-2.5 py-1 rounded-full bg-slate-200 text-slate-700">Stable</span>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left">
+                            <thead>
+                                <tr class="bg-slate-50/80 border-b border-slate-200">
+                                    <th class="px-5 py-3 text-[11px] font-bold uppercase tracking-wide text-slate-500">Volume</th>
+                                    <th class="px-5 py-3 text-[11px] font-bold uppercase tracking-wide text-slate-500">Temps estime</th>
+                                    <th class="px-5 py-3 text-[11px] font-bold uppercase tracking-wide text-slate-500">Cout</th>
+                                    <th class="px-5 py-3 text-[11px] font-bold uppercase tracking-wide text-slate-500 text-right">Benefice</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tableBody" class="divide-y divide-slate-200"></tbody>
+                        </table>
+                    </div>
+                </section>
+            </section>
+
+            <aside class="space-y-6 fade-up">
+                <section class="panel rounded-2xl p-5">
+                    <h2 class="text-lg font-bold">Analyse IA</h2>
+                    <p class="text-sm text-slate-600 mt-2">Genere un mini-rapport strategique base sur les indicateurs en cours.</p>
+
+                    <button id="btnIA" class="mt-4 w-full bg-slate-900 text-white font-bold py-3 rounded-xl hover:bg-slate-800 disabled:opacity-60 disabled:cursor-not-allowed transition-all">
+                        Generer le rapport
+                    </button>
+
+                    <div id="aiResponse" class="mt-4 hidden p-4 bg-slate-50 rounded-xl text-sm leading-relaxed text-slate-700 border border-slate-200"></div>
+                </section>
+
+                <section class="panel rounded-2xl p-5">
+                    <h2 class="text-sm font-bold uppercase tracking-wide text-slate-500 mb-4">Telemetrie</h2>
+                    <ul class="space-y-3 text-sm">
+                        <li class="flex justify-between">
+                            <span class="text-slate-500">Consommation / min</span>
+                            <span class="font-bold" id="varConsoMinute">0</span>
+                        </li>
+                        <li class="flex justify-between">
+                            <span class="text-slate-500">Production / min</span>
+                            <span class="font-bold text-emerald-700" id="varProdMinute">0 L</span>
+                        </li>
+                        <li class="flex justify-between">
+                            <span class="text-slate-500">Ratio actuel</span>
+                            <span class="font-bold" id="valRatio">0:0</span>
+                        </li>
+                    </ul>
+                </section>
+            </aside>
+        </main>
+    </div>
+
+<script>
+const config = {
+    soja: { cereals: 1, liters: 0.25 },
+    orge: { cereals: 1, liters: 0.25 },
+    ble_arctic: { cereals: 1, liters: 0.25 },
+    avoine_arctic: { cereals: 1, liters: 0.25 },
+    sorgho: { cereals: 1, liters: 2.5 },
+    mais: { cereals: 1, liters: 0.25 },
+    kamut: { cereals: 1, liters: 2.5 },
+    ble: { cereals: 5, liters: 0.25 },
+    barley: { cereals: 1, liters: 0.25 },
+    fonio: { cereals: 1, liters: 2.5 },
+    sunflower: { cereals: 1, liters: 0.25 },
+    rye: { cereals: 1, liters: 0.25 }
+};
+
+const OPENROUTER_MODEL = 'openrouter/free';
+const OPENROUTER_API_KEY = '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';
+
+const moneyFormatter = new Intl.NumberFormat('fr-FR', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+});
+
+const refs = {
+    cereal: document.getElementById('cerealSelect'),
+    cerealTrigger: document.getElementById('cerealTrigger'),
+    cerealMenu: document.getElementById('cerealMenu'),
+    cerealLabel: document.getElementById('cerealLabel'),
+    machines: document.getElementById('nbMachinesInput'),
+    prixTonne: document.getElementById('prixTonneInput'),
+    prixVente: document.getElementById('prixVenteInput'),
+    btnIA: document.getElementById('btnIA'),
+    aiResponse: document.getElementById('aiResponse'),
+    valCoutLitre: document.getElementById('valCoutLitre'),
+    varBeneficeMinute: document.getElementById('varBeneficeMinute'),
+    valMargeLitre: document.getElementById('valMargeLitre'),
+    valRatio: document.getElementById('valRatio'),
+    varConsoMinute: document.getElementById('varConsoMinute'),
+    varProdMinute: document.getElementById('varProdMinute'),
+    tableBody: document.getElementById('tableBody'),
+    rentabiliteBadge: document.getElementById('rentabiliteBadge'),
+    beneficeCard: document.getElementById('beneficeCard')
+};
+
+function formatMoney(value) {
+    return `${moneyFormatter.format(value)} $`;
+}
+
+function clampPositive(value, fallback, min = 0) {
+    const parsed = Number.parseFloat(value);
+    if (!Number.isFinite(parsed)) {
+        return fallback;
+    }
+    return Math.max(parsed, min);
+}
+
+function toMachineCount(value) {
+    const parsed = Number.parseInt(value, 10);
+    if (!Number.isFinite(parsed) || parsed < 1) {
+        return 1;
+    }
+    return parsed;
+}
+
+function applyProfitStyle(beneficeMinute) {
+    const profitable = beneficeMinute >= 0;
+    refs.beneficeCard.className = profitable
+        ? 'rounded-2xl p-5 border shadow-lg bg-gradient-to-br from-emerald-600 to-emerald-700 border-emerald-800 text-white transition-colors'
+        : 'rounded-2xl p-5 border shadow-lg bg-gradient-to-br from-rose-600 to-rose-700 border-rose-800 text-white transition-colors';
+    refs.rentabiliteBadge.className = profitable
+        ? 'text-xs font-bold px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-700'
+        : 'text-xs font-bold px-2.5 py-1 rounded-full bg-rose-100 text-rose-700';
+    refs.rentabiliteBadge.textContent = profitable ? 'Rentable' : 'Deficitaire';
+}
+
+function closeCerealMenu() {
+    refs.cerealMenu.hidden = true;
+    refs.cerealTrigger.setAttribute('aria-expanded', 'false');
+}
+
+function updateCerealLabel() {
+    const selectedOption = refs.cereal.options[refs.cereal.selectedIndex];
+    refs.cerealLabel.textContent = selectedOption ? selectedOption.textContent : 'Selectionner';
+}
+
+function renderCerealMenu() {
+    const selectedValue = refs.cereal.value;
+    const items = Array.from(refs.cereal.options).map((option) => {
+        const isActive = option.value === selectedValue;
+        const activeClass = isActive ? 'select-item select-item-active' : 'select-item';
+        return `<button type="button" class="${activeClass}" data-value="${option.value}" role="option" aria-selected="${isActive}">${option.textContent}</button>`;
+    });
+    refs.cerealMenu.innerHTML = items.join('');
+}
+
+function selectCereal(value) {
+    refs.cereal.value = value;
+    updateCerealLabel();
+    renderCerealMenu();
+    calculer();
+}
+
+function initCerealDropdown() {
+    updateCerealLabel();
+    renderCerealMenu();
+
+    refs.cerealTrigger.addEventListener('click', () => {
+        const willOpen = refs.cerealMenu.hidden;
+        refs.cerealMenu.hidden = !willOpen;
+        refs.cerealTrigger.setAttribute('aria-expanded', String(willOpen));
+    });
+
+    refs.cerealMenu.addEventListener('click', (event) => {
+        const item = event.target.closest('[data-value]');
+        if (!item) {
+            return;
+        }
+        selectCereal(item.getAttribute('data-value'));
+        closeCerealMenu();
+    });
+
+    document.addEventListener('click', (event) => {
+        const inside = event.target.closest('.select-dropdown');
+        if (!inside) {
+            closeCerealMenu();
+        }
+    });
+
+    document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape') {
+            closeCerealMenu();
+        }
+    });
+}
+
+function calculer() {
+    const type = refs.cereal.value;
+    const conf = config[type] || config.soja;
+    const ratio = conf.cereals / conf.liters;
+
+    const prixTonne = clampPositive(refs.prixTonne.value, 0, 0);
+    const nbMachines = toMachineCount(refs.machines.value);
+    const prixVente100L = clampPositive(refs.prixVente.value, 0, 0);
+
+    refs.machines.value = String(nbMachines);
+    refs.prixTonne.value = String(prixTonne);
+    refs.prixVente.value = String(prixVente100L);
+
+    const prixCereale = prixTonne / 1000;
+    const coutLitre = prixCereale * ratio;
+    const prixVenteLitre = prixVente100L / 100;
+    const margeLitre = prixVenteLitre - coutLitre;
+
+    const consoParMinute = nbMachines * 60;
+    const prodParMinute = consoParMinute / ratio;
+    const beneficeMinute = (prodParMinute * prixVenteLitre) - (consoParMinute * prixCereale);
+
+    refs.valCoutLitre.textContent = formatMoney(coutLitre);
+    refs.valMargeLitre.textContent = formatMoney(margeLitre);
+    refs.varBeneficeMinute.textContent = formatMoney(beneficeMinute);
+    refs.valRatio.textContent = `${conf.cereals} / ${conf.liters}`;
+    refs.varConsoMinute.textContent = String(consoParMinute);
+    refs.varProdMinute.textContent = `${prodParMinute.toFixed(1)} L`;
+    applyProfitStyle(beneficeMinute);
+
+    const rows = [1, 10, 100, 500].map((volume) => {
+        const cout = volume * coutLitre;
+        const benef = (volume * prixVenteLitre) - cout;
+        const tempsSec = Math.ceil((volume * ratio) / nbMachines);
+        const benefitClass = benef >= 0 ? 'text-emerald-700' : 'text-rose-700';
+        return `<tr>
+            <td class="px-5 py-3.5 font-bold">${volume} L</td>
+            <td class="px-5 py-3.5 text-slate-600">${tempsSec} s</td>
+            <td class="px-5 py-3.5 font-semibold text-slate-700">${formatMoney(cout)}</td>
+            <td class="px-5 py-3.5 font-bold text-right ${benefitClass}">${formatMoney(benef)}</td>
+        </tr>`;
+    });
+    refs.tableBody.innerHTML = rows.join('');
+}
+
+async function genererAnalyse() {
+    const apiKey = OPENROUTER_API_KEY;
+    refs.aiResponse.classList.remove('hidden');
+
+    if (!apiKey) {
+        refs.aiResponse.textContent = 'Cle API manquante.';
+        return;
+    }
+
+    refs.btnIA.textContent = 'Analyse en cours...';
+    refs.btnIA.disabled = true;
+    refs.aiResponse.textContent = 'Lecture des KPIs et preparation du rapport...';
+
+    const prompt = `Agis comme un expert en economie industrielle. Voici les donnees :
+    Cereale : ${refs.cereal.value}
+    Nombre de machines : ${refs.machines.value}
+    Prix tonne : ${refs.prixTonne.value}$
+    Prix de vente (100L) : ${refs.prixVente.value}$
+    Cout/Litre : ${refs.valCoutLitre.textContent}
+    Marge/Litre : ${refs.valMargeLitre.textContent}
+    Benefice/Minute : ${refs.varBeneficeMinute.textContent}
+
+    Donne une analyse strategique concrete, en 3 phrases maximum, pour ameliorer la rentabilite.`;
+
+    try {
+        const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+                Authorization: `Bearer ${apiKey}`,
+                'Content-Type': 'application/json',
+                'HTTP-Referer': window.location.href,
+                'X-Title': 'Dashboard Bio-Generateur'
+            },
+            body: JSON.stringify({
+                model: OPENROUTER_MODEL,
+                messages: [{ role: 'user', content: prompt }]
+            })
+        });
+
+        if (!response.ok) {
+            throw new Error(`API OpenRouter: ${response.status}`);
+        }
+
+        const data = await response.json();
+        const content = data?.choices?.[0]?.message?.content;
+        refs.aiResponse.textContent = content || 'Reponse IA vide. Verifiez le modele ou la cle API.';
+    } catch (error) {
+        refs.aiResponse.textContent = `Erreur IA: ${error.message}`;
+    } finally {
+        refs.btnIA.textContent = 'Generer Rapport';
+        refs.btnIA.disabled = false;
+    }
+}
+
+refs.machines.addEventListener('input', calculer);
+refs.prixTonne.addEventListener('input', calculer);
+refs.prixVente.addEventListener('input', calculer);
+refs.btnIA.addEventListener('click', genererAnalyse);
+
+window.addEventListener('DOMContentLoaded', () => {
+    initCerealDropdown();
+    calculer();
+});
+</script>
+</body>
+</html>
